@@ -1,0 +1,132 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>nl.lubux.playground</groupId>
+	<artifactId>soapui-reporting-example</artifactId>
+	<version>1.0.0-SNAPSHOT</version>
+	<packaging>pom</packaging>
+
+	<properties>
+		<!--
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		-->
+	</properties>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>com.smartbear.soapui</groupId>
+				<artifactId>soapui-maven-plugin</artifactId>
+				<version>5.5.0</version>
+				<dependencies>
+					<dependency>
+						<groupId>com.jgoodies</groupId>
+						<artifactId>forms</artifactId>
+						<version>1.0.7</version>
+					</dependency>
+				</dependencies>
+				<executions>
+					<execution>
+						<phase>integration-test</phase>
+						<goals>
+							<goal>mock</goal>
+							<goal>test</goal>
+						</goals>
+						<configuration>
+							<projectFile>${project.basedir}/src/test/resources/Sample-SOAP-Project-soapui-project.xml</projectFile>
+							<outputFolder>${project.build.directory}/soapui/tests</outputFolder>
+							<noBlock>true</noBlock>
+							<printReport>true</printReport>
+							<junitReport>true</junitReport>
+							<testFailIgnore>true</testFailIgnore>
+							<soapuiProperties>
+								<property>
+									<name>soapui.logroot</name>
+									<value>${project.build.directory}/soapui/log/</value>
+								</property>
+							</soapuiProperties>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.8</version>
+				<dependencies>
+					<dependency>
+						<groupId>org.apache.ant</groupId>
+						<artifactId>ant-junit</artifactId>
+						<version>1.10.5</version>
+					</dependency>
+				</dependencies>
+				<executions>
+					<execution>
+						<phase>post-integration-test</phase>
+						<goals>
+							<goal>run</goal>
+						</goals>
+						<configuration>
+							<target>
+								<junitreport todir="${project.build.directory}/soapui/tests">
+									<fileset dir="${project.build.directory}/soapui/tests">
+										<include name="TEST-*.xml" />
+									</fileset>
+									<report format="noframes" todir="${project.build.directory}/soapui/tests" />
+								</junitreport>
+							</target>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>xml-maven-plugin</artifactId>
+				<version>1.0.2</version>
+				<executions>
+					<execution>
+						<phase>post-integration-test</phase>
+						<goals>
+							<goal>transform</goal>
+						</goals>
+						<configuration>
+							<transformationSets>
+								<transformationSet>
+									<dir>${project.build.directory}/soapui/tests</dir>
+									<stylesheet>${project.basedir}/src/test/resources/support/create-failsafe-summary.xsl</stylesheet>
+									<outputDir>${project.build.directory}/soapui/tests</outputDir>
+									<includes>
+										<include>TESTS-TestSuites.xml</include>
+									</includes>
+									<fileMappers>
+										<fileMapper implementation="org.codehaus.plexus.components.io.filemappers.RegExpFileMapper">
+											<pattern>TESTS-TestSuites.xml</pattern>
+											<replacement>failsafe-summary.xml</replacement>
+										</fileMapper>
+									</fileMappers>
+								</transformationSet>
+							</transformationSets>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<version>3.0.0-M3</version>
+				<executions>
+					<execution>
+						<phase>verify</phase>
+						<goals>
+							<goal>verify</goal>
+						</goals>
+						<configuration>
+							<summaryFile>${project.build.directory}/soapui/tests/failsafe-summary.xml</summaryFile>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>
